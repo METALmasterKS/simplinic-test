@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/METALmasterKS/simplinic/app/definition"
 	di "github.com/sarulabs/di/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
-	"path/filepath"
 )
 
 var (
@@ -46,6 +47,7 @@ func init() {
 			},
 			definition.DefBus(),
 			definition.DefGeneratorFactory(),
+			definition.DefAggregatorFactory(),
 		)
 
 		diContainer = builder.Build()

@@ -2,12 +2,13 @@ package generator
 
 import (
 	"context"
+
 	"github.com/rs/zerolog"
 )
 
 // GeneratorFactory interface
 type GeneratorFactory interface {
-	CreateGenerator(ctx context.Context, options GeneratorOptions) (c *Generator, err error)
+	CreateGenerator(ctx context.Context, options Options) (c *Generator, err error)
 }
 
 type generatorFactory struct {
@@ -24,7 +25,7 @@ func NewGeneratorFactory(logger zerolog.Logger, bus bus) GeneratorFactory {
 }
 
 // Connect as service
-func (f *generatorFactory) CreateGenerator(ctx context.Context, options GeneratorOptions) (c *Generator, err error) {
+func (f *generatorFactory) CreateGenerator(ctx context.Context, options Options) (c *Generator, err error) {
 
 	if c, err = NewGenerator(ctx, f.bus, options); err != nil {
 		return nil, err

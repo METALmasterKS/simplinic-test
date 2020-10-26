@@ -3,6 +3,7 @@ package definition
 import (
 	"context"
 	"fmt"
+
 	"github.com/METALmasterKS/simplinic/bus"
 	"github.com/sarulabs/di/v2"
 	"github.com/spf13/viper"

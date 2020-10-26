@@ -3,10 +3,11 @@ package generator
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	bus2 "github.com/METALmasterKS/simplinic/bus"
 	"github.com/METALmasterKS/simplinic/types"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 // dependencies
@@ -20,18 +21,18 @@ type (
 	Generator struct {
 		logger      zerolog.Logger
 		bus         bus
-		options     GeneratorOptions
+		options     Options
 		dataSources []*DataSource
 	}
 
-	GeneratorOptions struct {
+	Options struct {
 		Timeout            types.Duration      `mapstructure:"timeout_s"`
 		SendPeriod         types.Duration      `mapstructure:"send_period_s"`
 		DataSourcesOptions []DataSoucesOptions `mapstructure:"data_sources"`
 	}
 )
 
-func NewGenerator(ctx context.Context, b bus, options GeneratorOptions) (*Generator, error) {
+func NewGenerator(ctx context.Context, b bus, options Options) (*Generator, error) {
 
 	g := Generator{
 		bus:         b,

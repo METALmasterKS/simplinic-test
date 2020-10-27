@@ -3,7 +3,6 @@ package bus
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -101,7 +100,6 @@ func (b *bus) broadcast(msg Message) {
 	for name := range subscribers {
 		select {
 		case subscribers[name] <- msg:
-			fmt.Printf("stack %s size:%d\n", name, len(subscribers[name]))
 		case <-b.stopCh:
 			return
 		}
@@ -110,12 +108,15 @@ func (b *bus) broadcast(msg Message) {
 }
 
 func (b *bus) process(ctx context.Context) {
+	semaphore := make(chan struct{}, 10)
 	for {
-		fmt.Printf("stack size:%d\n", len(b.stack))
-		var msg Message
 		select {
-		case msg = <-b.stack:
+		case msg := <-b.stack:
+			semaphore <- struct{}{}
 			go func(msg Message) {
+				defer func() {
+					<-semaphore
+				}()
 				b.broadcast(msg)
 			}(msg)
 		case <-ctx.Done():

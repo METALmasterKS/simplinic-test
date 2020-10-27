@@ -6,8 +6,8 @@
       "data_sources": [
         {
           "id": "data_1",
-          "init_value": 50,
-          "max_change_step": 5
+          "init_value": 0,
+          "max_change_step": 1
         },
         {
           "id": "data_2",
@@ -22,8 +22,8 @@
       "data_sources": [
         {
           "id": "data_3",
-          "init_value": 50,
-          "max_change_step": 5
+          "init_value": 0,
+          "max_change_step": 1
         }
       ]
     }
@@ -33,14 +33,14 @@
       "sub_ids": [
         "data_1"
       ],
-      "aggregate_period_s": 10
+      "aggregate_period_s": 20
     },
     {
       "sub_ids": [
         "data_2",
         "data_3"
       ],
-      "aggregate_period_s": 1
+      "aggregate_period_s": 10
     }
   ],
   "queue": {

@@ -27,7 +27,12 @@ func NewAggregatorFactory(logger zerolog.Logger, bus bus) AggregatorFactory {
 // Connect as service
 func (f *aggregatorFactory) CreateAggregator(ctx context.Context, options Options) (c *Aggregator, err error) {
 
-	if c, err = NewAggregator(ctx, f.logger, f.bus, options); err != nil {
+	if c, err = NewAggregator(
+		ctx,
+		f.logger.With().Strs("data_ids", options.DataIDs).Logger(),
+		f.bus,
+		options,
+	); err != nil {
 		return nil, err
 	}
 

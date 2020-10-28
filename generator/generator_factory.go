@@ -27,7 +27,17 @@ func NewGeneratorFactory(logger zerolog.Logger, bus bus) GeneratorFactory {
 // Connect as service
 func (f *generatorFactory) CreateGenerator(ctx context.Context, options Options) (c *Generator, err error) {
 
-	if c, err = NewGenerator(ctx, f.bus, options); err != nil {
+	var ids = make([]string, len(options.DataSourcesOptions))
+	for i := range options.DataSourcesOptions {
+		ids[i] = options.DataSourcesOptions[i].ID
+	}
+
+	if c, err = NewGenerator(
+		ctx,
+		f.logger.With().Strs("data_ids", ids).Logger(),
+		f.bus,
+		options,
+	); err != nil {
 		return nil, err
 	}
 

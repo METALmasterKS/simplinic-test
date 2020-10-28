@@ -1,14 +1,18 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/METALmasterKS/simplinic/app/definition"
+	"github.com/rs/zerolog/log"
 	di "github.com/sarulabs/di/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
 )
 
 var (
@@ -19,9 +23,6 @@ var (
 		Use:   "app [command]",
 		Short: "application",
 		Long:  `Application for test simplinic`,
-		Run: func(cmd *cobra.Command, args []string) {
-
-		},
 	}
 
 	diContainer di.Container
@@ -32,7 +33,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "json config file")
 
-	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		builder, err := di.NewBuilder()
 		if err != nil {
 			return err
@@ -57,10 +58,21 @@ func init() {
 
 }
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	ctxCancel, cancel := context.WithCancel(context.Background())
+
+	if err := rootCmd.ExecuteContext(ctxCancel); err != nil {
 		fmt.Println("Error: %w", err)
 		os.Exit(1)
 	}
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	<-signalChan
+	log.Info().Msg("5 seconds to stopping...")
+	cancel()
+	<-time.After(5 * time.Second)
+	_ = diContainer.Delete()
+	os.Exit(0)
 }
 
 func initConfig() {

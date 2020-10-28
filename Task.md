@@ -20,7 +20,7 @@
     "agregators": [
         {
             "sub_ids":                  ["data_1"],  // array of dataIds that agregator subscribes to
-            "agregate_period_s":        10          // period in seconds to collect and process data
+            "agregate_period_s":        10          // period in seconds to collect and process data // period предпологает повторяющее действие
         }
     ],
     "queue": {

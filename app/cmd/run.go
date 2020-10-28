@@ -7,13 +7,12 @@ import (
 	"github.com/METALmasterKS/simplinic/aggregator"
 	"github.com/METALmasterKS/simplinic/app/definition"
 	"github.com/METALmasterKS/simplinic/generator"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 // Bus command.
-var busCmd = &cobra.Command{
+var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run command",
 	RunE: func(_ *cobra.Command, _ []string) (err error) {
@@ -43,19 +42,11 @@ var busCmd = &cobra.Command{
 			}
 		}
 
-		//// wait for stop application
-		//signalChan := make(chan os.Signal, 1)
-		//signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-		//<-signalChan
-
-		<-ctx.Done()
-		log.Info().Msg("stopping...")
-
 		return nil
 	},
 }
 
 // Command init function.
 func init() {
-	rootCmd.AddCommand(busCmd)
+	rootCmd.AddCommand(runCmd)
 }

@@ -32,6 +32,7 @@ type (
 		DataIDs []string       `mapstructure:"sub_ids"`
 	}
 
+	//easyjson:json
 	data struct {
 		ID    string `json:"id"`
 		Value int    `json:"value"`
@@ -59,10 +60,12 @@ func NewAggregator(ctx context.Context, logger zerolog.Logger, b bus, options Op
 
 func (g *Aggregator) run(ctx context.Context) {
 	timer := time.NewTimer(g.options.Period.Duration())
+	g.logger.Info().Msg("start")
 	for {
 		select {
 		case <-ctx.Done():
-			g.logger.Error().Err(ctx.Err())
+			g.stop()
+			g.logger.Error().Err(ctx.Err()).Msg("stop")
 			return
 		case <-timer.C:
 			g.stop()
@@ -76,7 +79,7 @@ func (g *Aggregator) run(ctx context.Context) {
 func (g *Aggregator) stop() {
 	for _, dataID := range g.options.DataIDs {
 		if err := g.bus.Unsubscribe(dataID); err != nil {
-			g.logger.Error().Err(err)
+			g.logger.Error().Err(err).Msg("stop")
 		}
 	}
 }
@@ -101,7 +104,7 @@ func (g *Aggregator) process(ctx context.Context) {
 					var d data
 					err := json.Unmarshal(msg.Body, &d)
 					if err != nil {
-						g.logger.Error().Err(err)
+						g.logger.Error().Err(err).Msg("unmarshal")
 					}
 
 					g.logger.Info().Int("len", len(msgCh)).Str("id", d.ID).Msg("data")

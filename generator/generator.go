@@ -32,9 +32,10 @@ type (
 	}
 )
 
-func NewGenerator(ctx context.Context, b bus, options Options) (*Generator, error) {
+func NewGenerator(ctx context.Context, logger zerolog.Logger, b bus, options Options) (*Generator, error) {
 
 	g := Generator{
+		logger:      logger,
 		bus:         b,
 		options:     options,
 		dataSources: make([]*DataSource, len(options.DataSourcesOptions)),
@@ -51,10 +52,12 @@ func NewGenerator(ctx context.Context, b bus, options Options) (*Generator, erro
 
 func (g *Generator) run(ctx context.Context) {
 	ticker := time.NewTicker(g.options.Timeout.Duration())
+	g.logger.Info().Msg("start")
 	for {
 		select {
 		case <-ctx.Done():
-			g.logger.Error().Err(ctx.Err())
+			g.logger.Error().Err(ctx.Err()).Msg("stop")
+			return
 		case <-ticker.C:
 			g.processWithTimeout(ctx)
 		}
@@ -72,11 +75,11 @@ func (g *Generator) process(ctx context.Context) {
 		ds.Increment()
 		msg, err := json.Marshal(ds)
 		if err != nil {
-			g.logger.Error().Err(err)
+			g.logger.Error().Err(err).Msg("marshal")
 		}
 
 		if err := g.bus.Publish(ctx, bus2.Message{Body: msg}); err != nil {
-			g.logger.Error().Err(err)
+			g.logger.Error().Err(err).Msg("publish")
 		}
 	}
 }

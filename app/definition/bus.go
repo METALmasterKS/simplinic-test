@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/METALmasterKS/simplinic/bus"
+	"github.com/rs/zerolog/log"
 	"github.com/sarulabs/di/v2"
 	"github.com/spf13/viper"
 )
@@ -16,6 +17,7 @@ func DefBus() di.Def {
 		Name: DefBusName,
 		Build: func(ctn di.Container) (_ interface{}, err error) {
 			ctx := ctn.Get(DefContextName).(context.Context)
+			logger := log.With().Str(KeyComponent, DefBusName).Logger()
 
 			queueCfg := viper.GetViper().Sub("queue")
 			if queueCfg == nil {
@@ -26,12 +28,12 @@ func DefBus() di.Def {
 				return nil, fmt.Errorf("size must be greather than 0")
 			}
 
-			return bus.NewBus(ctx, capacity), nil
+			return bus.NewBus(ctx, logger, capacity), nil
 		},
-		Close: func(obj interface{}) error {
-			b := obj.(bus.Broker)
-			b.Close()
-			return nil
-		},
+		//Close: func(obj interface{}) error {
+		//	b := obj.(bus.Broker)
+		//	b.Close()
+		//	return nil
+		//},
 	}
 }

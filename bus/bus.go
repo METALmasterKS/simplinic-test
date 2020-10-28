@@ -3,6 +3,7 @@ package bus
 import (
 	"context"
 	"errors"
+	"github.com/rs/zerolog"
 	"sync"
 )
 
@@ -18,6 +19,8 @@ type Broker interface {
 type bus struct {
 	stopCh chan bool
 
+	logger zerolog.Logger
+
 	capacity int
 
 	stack chan Message
@@ -27,9 +30,10 @@ type bus struct {
 }
 
 // NewBus
-func NewBus(ctx context.Context, capacity int) *bus {
+func NewBus(ctx context.Context, logger zerolog.Logger, capacity int) *bus {
 	var bus = &bus{
 		stopCh:      make(chan bool),
+		logger:      logger,
 		subscribers: make(map[string]chan<- Message),
 		stack:       make(chan Message, capacity),
 		capacity:    capacity,
@@ -83,6 +87,10 @@ func (b *bus) Unsubscribe(name string) error {
 		return errors.New("broker closed")
 	default:
 	}
+	if _, found := b.subscribers[name]; !found {
+		return errors.New("subscriber not exists")
+	}
+	close(b.subscribers[name])
 
 	b.m.Lock()
 	delete(b.subscribers, name)
@@ -109,6 +117,7 @@ func (b *bus) broadcast(msg Message) {
 
 func (b *bus) process(ctx context.Context) {
 	semaphore := make(chan struct{}, 10)
+	b.logger.Info().Msg("start")
 	for {
 		select {
 		case msg := <-b.stack:
@@ -119,8 +128,14 @@ func (b *bus) process(ctx context.Context) {
 				}()
 				b.broadcast(msg)
 			}(msg)
+
 		case <-ctx.Done():
-			return
+			b.Close()
+			if len(b.stack) == 0 {
+				b.logger.Info().Int("stack", len(b.stack)).Msg("stop")
+				return
+			}
+			b.logger.Info().Int("stack", len(b.stack)).Msg("waiting for stop...")
 		}
 	}
 }

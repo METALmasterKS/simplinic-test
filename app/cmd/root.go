@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/METALmasterKS/simplinic/app/definition"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	di "github.com/sarulabs/di/v2"
 	"github.com/spf13/cobra"
@@ -52,6 +53,8 @@ func init() {
 		)
 
 		diContainer = builder.Build()
+
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 		return err
 	}

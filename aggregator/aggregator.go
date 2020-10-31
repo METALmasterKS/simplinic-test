@@ -3,6 +3,7 @@ package aggregator
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"sync"
 	"time"
 
@@ -19,9 +20,21 @@ type (
 	}
 )
 
+// StorageType
+type StorageType uint8
+
+// storage types
+const (
+	LogStorageType StorageType = iota
+	FileStorageType
+)
+
+const storageFileName = "simplinic.log"
+
 type (
 	Aggregator struct {
 		logger      zerolog.Logger
+		writer      io.Writer
 		bus         bus
 		options     Options
 		dataSources map[string]<-chan bus2.Message
@@ -39,17 +52,17 @@ type (
 	}
 )
 
-func NewAggregator(ctx context.Context, logger zerolog.Logger, b bus, options Options) (g *Aggregator, err error) {
+func NewAggregator(ctx context.Context, logger zerolog.Logger, b bus, writer io.Writer, options Options) (g *Aggregator, err error) {
 
 	g = &Aggregator{
 		bus:         b,
 		options:     options,
 		logger:      logger,
+		writer:      writer,
 		dataSources: make(map[string]<-chan bus2.Message, len(options.DataIDs)),
 	}
 
 	for _, dataID := range options.DataIDs {
-
 		g.dataSources[dataID], err = g.bus.Subscribe(dataID)
 	}
 
@@ -84,7 +97,7 @@ func (g *Aggregator) stop() {
 	}
 }
 
-func (g *Aggregator) process(ctx context.Context) {
+func (g *Aggregator) process(_ context.Context) {
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, 10)
 	for name := range g.dataSources {
@@ -101,13 +114,18 @@ func (g *Aggregator) process(ctx context.Context) {
 			for {
 				select {
 				case msg := <-msgCh:
+					var err error
+					_, err = g.writer.Write(append(msg.Body, []byte("\n")...))
+					if err != nil {
+						g.logger.Error().Err(err).Msg("write")
+					}
 					var d data
-					err := json.Unmarshal(msg.Body, &d)
+					err = json.Unmarshal(msg.Body, &d)
 					if err != nil {
 						g.logger.Error().Err(err).Msg("unmarshal")
 					}
 
-					g.logger.Info().Int("len", len(msgCh)).Str("id", d.ID).Msg("data")
+					g.logger.Debug().Int("len", len(msgCh)).Str("id", d.ID).Msg("data")
 				default:
 				}
 				return

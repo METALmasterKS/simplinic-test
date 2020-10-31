@@ -5,6 +5,8 @@ import (
 	"github.com/METALmasterKS/simplinic/bus"
 	"github.com/rs/zerolog/log"
 	"github.com/sarulabs/di/v2"
+	"github.com/spf13/viper"
+	"io"
 )
 
 const DefAggregatorFactoryName = "agg-factory"
@@ -16,7 +18,13 @@ func DefAggregatorFactory() di.Def {
 			logger := log.With().Str(KeyComponent, DefAggregatorFactoryName).Logger()
 			b := ctn.Get(DefBusName).(bus.Broker)
 
-			return aggregator.NewAggregatorFactory(logger, b), nil
+			storageType := aggregator.StorageType(viper.GetInt("storage_type"))
+
+			return aggregator.NewAggregatorFactory(logger, b, storageType)
+		},
+		Close: func(obj interface{}) error {
+			aggFactory := obj.(io.Closer)
+			return aggFactory.Close()
 		},
 	}
 }

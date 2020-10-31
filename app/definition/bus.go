@@ -30,10 +30,5 @@ func DefBus() di.Def {
 
 			return bus.NewBus(ctx, logger, capacity), nil
 		},
-		//Close: func(obj interface{}) error {
-		//	b := obj.(bus.Broker)
-		//	b.Close()
-		//	return nil
-		//},
 	}
 }

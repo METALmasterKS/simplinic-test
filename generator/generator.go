@@ -51,7 +51,7 @@ func NewGenerator(ctx context.Context, logger zerolog.Logger, b bus, options Opt
 }
 
 func (g *Generator) run(ctx context.Context) {
-	ticker := time.NewTicker(g.options.Timeout.Duration())
+	ticker := time.NewTicker(g.options.SendPeriod.Duration())
 	g.logger.Info().Msg("start")
 	for {
 		select {
@@ -65,7 +65,7 @@ func (g *Generator) run(ctx context.Context) {
 }
 
 func (g *Generator) processWithTimeout(ctx context.Context) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, g.options.SendPeriod.Duration())
+	timeoutCtx, cancel := context.WithTimeout(ctx, g.options.Timeout.Duration())
 	defer cancel()
 	g.process(timeoutCtx)
 }
@@ -78,7 +78,7 @@ func (g *Generator) process(ctx context.Context) {
 			g.logger.Error().Err(err).Msg("marshal")
 		}
 
-		if err := g.bus.Publish(ctx, bus2.Message{Body: msg}); err != nil {
+		if err := g.bus.Publish(ctx, bus2.Message{From: ds.ID, Body: msg}); err != nil {
 			g.logger.Error().Err(err).Msg("publish")
 		}
 	}

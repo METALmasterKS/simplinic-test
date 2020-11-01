@@ -3,8 +3,9 @@ package bus
 import (
 	"context"
 	"errors"
-	"github.com/rs/zerolog"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
 
 //Broker
@@ -62,6 +63,9 @@ func (b *bus) Publish(ctx context.Context, msg Message) error {
 	default:
 	}
 
+	if len(b.stack) == cap(b.stack) {
+		b.logger.Info().Msg("stack is full")
+	}
 	b.stack <- msg
 
 	return nil
@@ -106,6 +110,9 @@ func (b *bus) broadcast(msg Message) {
 	b.m.RUnlock()
 
 	for name := range subscribers {
+		if name != msg.From {
+			continue
+		}
 		select {
 		case subscribers[name] <- msg:
 		case <-b.stopCh:
@@ -136,6 +143,10 @@ func (b *bus) process(ctx context.Context) {
 				return
 			}
 			b.logger.Info().Int("stack", len(b.stack)).Msg("waiting for stop...")
+
+		case <-b.stopCh:
+			return
+
 		}
 	}
 }

@@ -105,7 +105,7 @@ func (g *Aggregator) stop() {
 	}
 }
 
-func (g *Aggregator) process(_ context.Context) {
+func (g *Aggregator) process(ctx context.Context) {
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, 10)
 	for name := range g.dataSources {
@@ -119,25 +119,27 @@ func (g *Aggregator) process(_ context.Context) {
 				<-semaphore
 				wg.Done()
 			}()
-			for {
-				select {
-				case msg := <-msgCh:
-					var d data
-					err := json.Unmarshal(msg.Body, &d)
-					if err != nil {
-						g.logger.Error().Err(err).Msg("unmarshal")
-					}
-
-					g.m.Lock()
-					if _, ok := g.buffer[d.ID]; !ok {
-						g.buffer[d.ID] = make([]int, 0, 100)
-					}
-					g.buffer[d.ID] = append(g.buffer[d.ID], d.Value)
-					g.m.Unlock()
-
-				default:
+			select {
+			case msg, ok := <-msgCh:
+				if !ok {
+					g.logger.Debug().Msg("channel closed")
+					return
 				}
+				var d data
+				err := json.Unmarshal(msg.Body, &d)
+				if err != nil {
+					g.logger.Error().Err(err).Msg("unmarshal")
+				}
+
+				g.m.Lock()
+				if _, ok := g.buffer[d.ID]; !ok {
+					g.buffer[d.ID] = make([]int, 0, 100)
+				}
+				g.buffer[d.ID] = append(g.buffer[d.ID], d.Value)
+				g.m.Unlock()
+			case <-ctx.Done():
 				return
+			default:
 			}
 		}(g.dataSources[name])
 

@@ -177,6 +177,9 @@ func (g *Aggregator) flush() {
 }
 
 func avg(ints []int) (avg float64) {
+	if len(ints) == 0 {
+		return 0
+	}
 	for _, v := range ints {
 		avg += float64(v)
 	}

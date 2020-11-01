@@ -103,18 +103,15 @@ func (b *bus) Unsubscribe(name string) error {
 }
 
 func (b *bus) broadcast(msg Message) {
-	var subscribers map[string]chan<- Message
-
 	b.m.RLock()
-	subscribers = b.subscribers
-	b.m.RUnlock()
+	defer b.m.RUnlock()
 
-	for name := range subscribers {
+	for name := range b.subscribers {
 		if name != msg.From {
 			continue
 		}
 		select {
-		case subscribers[name] <- msg:
+		case b.subscribers[name] <- msg:
 		case <-b.stopCh:
 			return
 		}

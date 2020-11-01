@@ -87,7 +87,7 @@ func (g *Aggregator) run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			g.stop()
-			g.logger.Error().Err(ctx.Err()).Msg("stop")
+			g.logger.Info().Err(ctx.Err()).Msg("stop")
 			return
 		case <-ticker.C:
 			g.flush()

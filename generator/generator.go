@@ -45,7 +45,8 @@ func NewGenerator(ctx context.Context, logger zerolog.Logger, b bus, options Opt
 		g.dataSources[i] = NewDataSource(opts.ID, opts.InitValue, opts.MaxChangesStep)
 	}
 
-	go g.run(ctx)
+	timeoutCtx, _ := context.WithTimeout(ctx, g.options.Timeout.Duration())
+	go g.run(timeoutCtx)
 
 	return &g, nil
 }
@@ -56,18 +57,12 @@ func (g *Generator) run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			g.logger.Error().Err(ctx.Err()).Msg("stop")
+			g.logger.Info().Err(ctx.Err()).Msg("stop")
 			return
 		case <-ticker.C:
-			g.processWithTimeout(ctx)
+			g.process(ctx)
 		}
 	}
-}
-
-func (g *Generator) processWithTimeout(ctx context.Context) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, g.options.Timeout.Duration())
-	defer cancel()
-	g.process(timeoutCtx)
 }
 
 func (g *Generator) process(ctx context.Context) {

@@ -1,7 +1,7 @@
 {
   "generators": [
     {
-      "timeout_s": 1,
+      "timeout_s": 30,
       "send_period_s": 1,
       "data_sources": [
         {
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "timeout_s": 1,
+      "timeout_s": 20,
       "send_period_s": 1,
       "data_sources": [
         {

@@ -62,6 +62,9 @@ func Execute() {
 		os.Exit(1)
 	}
 
+	if diContainer != nil {
+		_ = diContainer.Delete()
+	}
 	os.Exit(0)
 }
 

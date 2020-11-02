@@ -74,7 +74,11 @@ Storage type is specified in config file.
 
 
 ## Notes
-* duration в конфиге я бы записывал так `"timeout": "30s"`, тогда можно изпользовать viper.GetDuration(key string) time.Duration 
+* duration в конфиге я бы записывал так `"timeout": "30s"`, тогда можно изпользовать viper.GetDuration(key string) time.Duration
+
+## TODO
+
+* Stop after all generators stopped 
 
 ## How to run
 ### Run by docker

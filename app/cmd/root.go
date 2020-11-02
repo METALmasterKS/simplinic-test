@@ -1,19 +1,15 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/METALmasterKS/simplinic/app/definition"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	di "github.com/sarulabs/di/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
 )
 
 var (
@@ -61,20 +57,11 @@ func init() {
 
 }
 func Execute() {
-	ctxCancel, cancel := context.WithCancel(context.Background())
-
-	if err := rootCmd.ExecuteContext(ctxCancel); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println("Error: %w", err)
 		os.Exit(1)
 	}
 
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	<-signalChan
-	log.Info().Msg("5 seconds to stopping...")
-	cancel()
-	<-time.After(5 * time.Second)
-	_ = diContainer.Delete()
 	os.Exit(0)
 }
 

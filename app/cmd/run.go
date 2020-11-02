@@ -3,10 +3,15 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/METALmasterKS/simplinic/aggregator"
 	"github.com/METALmasterKS/simplinic/app/definition"
 	"github.com/METALmasterKS/simplinic/generator"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -22,12 +27,14 @@ var runCmd = &cobra.Command{
 			aggregatorFactory = diContainer.Get(definition.DefAggregatorFactoryName).(aggregator.AggregatorFactory)
 		)
 
+		ctxCancel, cancel := context.WithCancel(ctx)
+
 		var aggregators []aggregator.Options
 		if err := viper.UnmarshalKey("aggregators", &aggregators); err != nil {
 			return err
 		}
 		for _, opts := range aggregators {
-			if _, err := aggregatorFactory.CreateAggregator(ctx, opts); err != nil {
+			if _, err := aggregatorFactory.CreateAggregator(ctxCancel, opts); err != nil {
 				return err
 			}
 		}
@@ -37,10 +44,17 @@ var runCmd = &cobra.Command{
 			return err
 		}
 		for _, genOpts := range generators {
-			if _, err := generatorFactory.CreateGenerator(ctx, genOpts); err != nil {
+			if _, err := generatorFactory.CreateGenerator(ctxCancel, genOpts); err != nil {
 				return err
 			}
 		}
+
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+		<-signalChan
+		log.Info().Msg("5 seconds to stopping...")
+		cancel()
+		<-time.After(5 * time.Second)
 
 		return nil
 	},
